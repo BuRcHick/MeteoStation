@@ -20,10 +20,11 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include <string.h>
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <string.h>
+#include "drv_logger.h"
+#include "stdio.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -69,9 +70,11 @@ int main(void) {
 	uint8_t buff[50] = {0U};
 	/* USER CODE END 1 */
 
-	/* MCU Configuration--------------------------------------------------------*/
+	/* MCU
+	 * Configuration--------------------------------------------------------*/
 
-	/* Reset of all peripherals, Initializes the Flash interface and the Systick.
+	/* Reset of all peripherals, Initializes the Flash interface and the
+	 * Systick.
 	 */
 	HAL_Init();
 
@@ -95,10 +98,11 @@ int main(void) {
 
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
-  sprintf(buff, "\n\rHello\n\r");
 	while (1) {
 		/* USER CODE END WHILE */
-    HAL_UART_Transmit(&huart2, buff, sizeof(buff), 10000);
+		sprintf((char *)buff, "Test MSG");
+		drv_logger_print(buff, LOG_INFO);
+		HAL_Delay(500);
 		/* USER CODE BEGIN 3 */
 	}
 	/* USER CODE END 3 */
@@ -139,7 +143,7 @@ void SystemClock_Config(void) {
 	/** Initializes the CPU, AHB and APB busses clocks
 	 */
 	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK |
-																RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
+								  RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
 	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
 	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
 	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
@@ -199,7 +203,8 @@ static void MX_GPIO_Init(void) {
  */
 void Error_Handler(void) {
 	/* USER CODE BEGIN Error_Handler_Debug */
-	/* User can add his own implementation to report the HAL error return state */
+	/* User can add his own implementation to report the HAL error return state
+	 */
 
 	/* USER CODE END Error_Handler_Debug */
 }
@@ -216,7 +221,8 @@ void assert_failed(uint8_t *file, uint32_t line) {
 	/* USER CODE BEGIN 6 */
 	/* User can add his own implementation to report the file name and line
 		 number,
-		 tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line)
+		 tex: printf("Wrong parameters value: file %s on line %d\r\n", file,
+	   line)
 	 */
 	/* USER CODE END 6 */
 }
