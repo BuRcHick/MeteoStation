@@ -25,7 +25,7 @@
 #include <string.h>
 #include "drv_logger.h"
 #include "stdio.h"
-#include "drv_common_errors.h"
+#include "drv_common_status.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/

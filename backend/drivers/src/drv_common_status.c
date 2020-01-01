@@ -1,6 +1,6 @@
-#include "drv_common_errors.h"
+#include "drv_common_status.h"
 
-const char* drv_error2string(drv_common_errors_t code) {
+const char* drv_error2string(drv_status_t code) {
 	switch (code) {
 		case drv_error:
 			return "Error";
