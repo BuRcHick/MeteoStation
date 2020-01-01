@@ -120,7 +120,6 @@ C_INCLUDES =  \
 -IDrivers/CMSIS/Include	
 
 
-include Drivers.make
 # compile gcc flags
 ASFLAGS = $(MCU) $(AS_DEFS) $(AS_INCLUDES) $(OPT) -Wall -fdata-sections -ffunction-sections
 
