@@ -37,3 +37,9 @@ $(BUILD_DIR)/%.bin: $(BUILD_DIR)/%.elf | $(BUILD_DIR)
 	
 $(BUILD_DIR):
 	mkdir $@		
+
+#######################################
+# flash
+#######################################
+flash: $(BUILD_DIR)/$(TARGET).elf
+	openocd -f interface/stlink-v2-1.cfg  -f target/stm32f4x.cfg -c "program $(BUILD_DIR)/$(TARGET).elf verify reset exit"
