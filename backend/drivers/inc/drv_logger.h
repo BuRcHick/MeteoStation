@@ -5,7 +5,7 @@
 
 typedef enum { LOG_INFO, LOG_ERROR, LOG_DEBUG } drv_logger_msg_type_t;
 
-void drv_logger_print(const uint8_t* buff, drv_logger_msg_type_t status);
+void drv_logger_print(drv_logger_msg_type_t status, const uint8_t* fmt, ...);
 
 
 #endif	//_LOGGER_H_
