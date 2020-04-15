@@ -1,0 +1,7 @@
+!cubemx_gen/Src
+!cubemx_gen/Inc
+!cubemx_gen/*.ioc
+cubemx_gen/Src/*
+!cubemx_gen/Src/main.c
+cubemx_gen/Inc/*
+!cubemx_gen/Inc/main.h
