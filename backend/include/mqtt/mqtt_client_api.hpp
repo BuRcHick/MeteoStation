@@ -8,9 +8,9 @@
 class CMQTTClient: public mosqpp::mosquittopp
 {
 private:
-    std::map<std::string, std::function<void(const std::string&)> > m_topics;
+    std::set<std::string> m_topics;
 public:
-    CMQTTClient(const char *id, const char *host, int port);
+    CMQTTClient(const char *id);
     ~CMQTTClient();
 
     void on_connect(int rc);
@@ -18,8 +18,13 @@ public:
     void on_subscribe(int mid, int qos_count, const int *granted_qos);
     void on_unsubscribe(int);
     void on_disconnect(int);
+    void on_publish(int);
 
-    common_status_t subscribeOnTopic(const std::string&, std::function<void(const std::string&)>);
+    common_status_t subscribeOnTopic(const std::string&);
     common_status_t unsubscribeFromTopic(const std::string&);
+
+    common_status_t connectToBroker(const char *host, int port);
+
+    common_status_t publishMessage(const char *topic, const char* message);
 
 };

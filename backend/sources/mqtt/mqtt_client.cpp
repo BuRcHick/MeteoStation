@@ -1,6 +1,7 @@
 #include <cstring>
 #include "mqtt/mqtt_client_api.hpp"
 #include "logger/logger_api.hpp"
+#include "qp/backend_events.hpp"
 
 #define MQTT_CLIENT_PREF "MQTT Client:"
 #define MQTT_CLIENT_LOG_ERROR(fmt, ...) CLogger::getLogger()->msgToLog(log_err, MQTT_CLIENT_PREF fmt, ##__VA_ARGS__)
@@ -8,18 +9,27 @@
 #define MQTT_CLIENT_LOG_INFO(fmt, ...) CLogger::getLogger()->msgToLog(log_info, MQTT_CLIENT_PREF fmt, ##__VA_ARGS__)
 #define MQTT_CLIENT_LOG_TRACE(fmt, ...) CLogger::getLogger()->msgToLog(log_trace, MQTT_CLIENT_PREF fmt, ##__VA_ARGS__)
 
+#define MQTT_SUCCESS_CHECK(c, r, fmt, ...) {			\
+	if(!(c)){										\
+		MQTT_CLIENT_LOG_ERROR(fmt, ##__VA_ARGS__);	\
+		return (r);									\
+	}}
+
 #define PUBLISH_TOPIC "anime"
 #define MAX_PAYLOAD 50
 #define DEFAULT_KEEP_ALIVE 60
 
 static bool s_subscribed = false;
 
-CMQTTClient::CMQTTClient(const char *id, const char *host, int port)
+CMQTTClient::CMQTTClient(const char *id)
 	: mosquittopp(id) {
-	connect(host, port, DEFAULT_KEEP_ALIVE);
+	mosqpp::lib_init();
 }
 
 CMQTTClient::~CMQTTClient() {
+	//mosquitto_loop_stop();
+	mosqpp::lib_cleanup();
+	MQTT_CLIENT_LOG_INFO("Client deleted");
 }
 
 void CMQTTClient::on_connect(int rc) {
@@ -29,35 +39,58 @@ void CMQTTClient::on_connect(int rc) {
 }
 
 void CMQTTClient::on_subscribe(int mid, int qos_count, const int *granted_qos) {
-    if(!s_subscribed){
+    //if(!s_subscribed){
         MQTT_CLIENT_LOG_DEBUG("Successfuly subscribed");
         s_subscribed = true;
-    }
+    //}
 }
 
 void CMQTTClient::on_unsubscribe(int) {
-	MQTT_CLIENT_LOG_DEBUG("Unsubscribed");
+	MQTT_CLIENT_LOG_INFO("Unsubscribed");
     s_subscribed = false;
 }
+
 void CMQTTClient::on_disconnect(int) {
-	MQTT_CLIENT_LOG_DEBUG("Disconecteds");
+	MQTT_CLIENT_LOG_INFO("Disconecteds");
+}
+
+void CMQTTClient::on_publish(int ID) {
+	MQTT_CLIENT_LOG_INFO("%d successfuly published");
 }
 
 void CMQTTClient::on_message(const struct mosquitto_message *message) {
-	int payload_size = MAX_PAYLOAD + 1;
-	char buf[payload_size];
-	if (m_topics.find(message->topic) != m_topics.end()) {
-		memcpy(buf, message->payload, MAX_PAYLOAD * sizeof(char));
-		m_topics.find(message->topic)->second(buf);
+	char buff[255] = {0};
+	if(m_topics.find(message->topic) != m_topics.end()){
+		MQTT_CLIENT_LOG_INFO("HERE");
+		MQTTMessageRecived *msg = Q_NEW(MQTTMessageRecived, MQTT_MESSAGE_RECIVED_SIG);
+		msg->m_topic = (char*)message->topic;
+		memcpy(buff, message->payload, (MAX_PAYLOAD + 1) * sizeof(char));
+		msg->m_message = buff;
+    	QP::QF::PUBLISH(msg, nullptr);
+		MQTT_CLIENT_LOG_DEBUG("MQTT Message recived: topic = %s data = %s", msg->m_topic.c_str(), msg->m_message.c_str());
 	}
 }
 
-common_status_t CMQTTClient::subscribeOnTopic(const std::string& topic, std::function<void(const std::string&)> cb) {
-	m_topics.insert(std::make_pair(topic, std::move(cb)));
-	subscribe(NULL, topic.c_str());
+common_status_t CMQTTClient::subscribeOnTopic(const std::string& topic) {
+	if(m_topics.find(topic) == m_topics.end()){
+		MQTT_CLIENT_LOG_DEBUG("Adding topic:%s", topic.c_str());
+		m_topics.insert(topic);
+		subscribe(NULL, topic.c_str());
+	}
 	return cmn_success;
 }
+
 common_status_t CMQTTClient::unsubscribeFromTopic(const std::string& topic) {
 	m_topics.erase(topic);
+	return cmn_success;
+}
+
+common_status_t CMQTTClient::connectToBroker(const char *host, int port){
+	connect_async(host, port, DEFAULT_KEEP_ALIVE);
+	return cmn_success;
+}
+
+common_status_t CMQTTClient::publishMessage(const char *topic, const char *message){
+	MQTT_SUCCESS_CHECK(publish(NULL, topic,strlen(message),message, 1, false) == MOSQ_ERR_SUCCESS, error_unknown, "MQTT Publsih error");
 	return cmn_success;
 }
