@@ -5,6 +5,7 @@
 #include "mqtt/mqtt_client_api.hpp"
 #include "qp/database_sm.hpp"
 #include "qp/backend_events.hpp"
+#include "qp/mqtt_client_sm.hpp"
 #include "logger/logger_api.hpp"
 
 uint16_t PORT = 1883;
@@ -16,7 +17,7 @@ const char* g_topics[] = {
     "APP"
 };
 
-CMQTTClient* g_mqttClient = nullptr;
+CMQTTClient g_mqttClient(ID.c_str());
 CLogger* g_logger = CLogger::getLogger();
 
 
@@ -33,88 +34,54 @@ void QP::QF_onClockTick(void) {
     QF::TICK_X(0U, nullptr);  // perform the QF clock tick processing
 }
 
+static DATABASE_SM::CDatabaseSM l_database;
+QP::QActive * const AO_Database = &l_database;
+
+static CMQTTLoop l_mqttLoop;
+QP::QActive * const AO_MQTTLoop = &l_mqttLoop;
+
+static CMQTTEvtHandler l_mqttEvtHandler;
+QP::QActive * const AO_MQTTEvtHandler = &l_mqttEvtHandler;
+
 int main() {
-    g_mqttClient = new CMQTTClient(ID.c_str());
-    static QP::QSubscrList subscrSto[255];
-    static QF_MPOOL_EL(MQTTMessageRecived) medPoolSto[10];
-    QP::QF::init(); // initialize the framework and the underlying RT kernel
-    QP::QF::psInit(subscrSto, Q_DIM(subscrSto)); // init publish-subscribe
-    QP::QF::poolInit(medPoolSto, sizeof(medPoolSto), sizeof(medPoolSto[0]));
+    //g_mqttClient = new CMQTTClient(ID.c_str());
     g_logger->setLogLevel(log_dbg);
     g_logger->setLogLevel(log_err);
     g_logger->setLogLevel(log_info);
     g_logger->setLogLevel(log_trace);
-    
-    mqttClietLoop();
-    delete g_mqttClient;
-    return 0;
+    static QP::QSubscrList subscrSto[255];
+    static QF_MPOOL_EL(HWSensorValueUpdate) smallPoolSto[10];
+    static QF_MPOOL_EL(HWAddSensor) medPoolSto[10];
+    static QF_MPOOL_EL(MQTTMessageRecived) largePoolSto[10];
+    static QP::QEvt const *database_queueSto[10];
+    static QP::QEvt const *mqttLoop_queueSto[2];
+    static QP::QEvt const *mqttEcvHndlr_queueSto[10];
+    QP::QF::init(); // initialize the framework and the underlying RT kernel
+    QP::QF::psInit(subscrSto, Q_DIM(subscrSto)); // init publish-subscribe
+    QP::QF::poolInit(smallPoolSto, sizeof(smallPoolSto), sizeof(smallPoolSto[0]));
+    QP::QF::poolInit(medPoolSto, sizeof(medPoolSto), sizeof(medPoolSto[0]));
+    QP::QF::poolInit(largePoolSto, sizeof(largePoolSto), sizeof(largePoolSto[0]));
+    AO_Database->start(1U, // priority
+                     database_queueSto, Q_DIM(database_queueSto),
+                     nullptr, 0U); // no stack
+    AO_MQTTLoop->start(2U, // priority
+                     mqttLoop_queueSto, Q_DIM(mqttLoop_queueSto),
+                     nullptr, 0U); // no stack
+    AO_MQTTEvtHandler->start(3U, // priority
+                     mqttEcvHndlr_queueSto, Q_DIM(mqttEcvHndlr_queueSto),
+                     nullptr, 0U); // no stack
+    return QP::QF::run();
 }
 
 void mqttClientInit(){
     for (size_t i = 0; i < Q_DIM(g_topics); i++){
-        g_mqttClient->subscribeOnTopic(g_topics[i]);
+        g_mqttClient.subscribeOnTopic(g_topics[i]);
     }
 }
 
 void mqttClietLoop(){
-    g_mqttClient->connectToBroker(HOST.c_str(), PORT);
+    g_mqttClient.connectToBroker(HOST.c_str(), PORT);
     mqttClientInit();
-    while(1)
-    {
-        int rc = g_mqttClient->loop();
-        if (rc)
-        {
-            g_mqttClient->reconnect();
-        }
-        else
-            mqttClientInit();
-    }
-    g_mqttClient->loop_forever();
-    //while(true) {
-    //    g_mqttClient.loop();
-    //}
+    g_mqttClient.loop_forever();
+    g_mqttClient.loop_stop();
 }
-
-// /*
-
-// ifstream config("backend_mqtt.cfg");
-// std::string line = "";
-// std::string host = "";
-// std::string id = "";
-// int port = 0;
-
-// while(getline(config, line)) {
-//     if(line.find("host=")){
-//         host = line.substr(strlen("host=")));
-//     }
-//     if(line.find("port=")){
-//         port = line.substr(strlen("port=")));
-//     }
-//     if(line.find("id=")){
-//         id = std::stoi(line.substr(strlen("id="))));
-//     }
-// }
-// g_mqttClient.connectToBroker(host.c_str(), port);
-// AO_MQTTManager->POST(Q_NEW(QEvt, CONFIG_FINISHED), this);
-
-
-// #include "backend.hpp"
-// #include "database/database_manager.hpp"
-// #include "database/database_api.hpp"
-// #include "logger/logger_api.hpp"
-
-// int main() {
-//     static QP::QSubscrList subscrSto[255];
-
-//     QP::QF::init(); // initialize the framework and the underlying RT kernel
-
-
-//     QP::QF::psInit(subscrSto, Q_DIM(subscrSto)); // init publish-subscribe
-
-//     // start the active objects...
-//     // NOTE: AO_Tunnel is the GUI Active Object
-//     BACKEND::AO_Tunnel ->start(1U, // priority
-//                       (QP::QEvt const **)0, 0U,    // no evt queue
-//                       nullptr, 0U); // no stack for GUI thread
-// }
-// */
