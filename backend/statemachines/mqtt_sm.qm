@@ -82,7 +82,12 @@ MQTT_CLIENT_LOG_DEBUG(&quot;Successfuly parsed&quot;);</action>
         assert(g_document[&quot;title&quot;].IsString());
         newEvt-&gt;m_title = g_document[&quot;title&quot;].GetString();
         QP::QF::PUBLISH(newEvt, nullptr);
-    }else {
+    } else if(command == &quot;REMOVE_SENSOR&quot;){
+        auto newEvt = Q_NEW(HWRemoveSensor, HW_REMOVE_SENSOR_SIG);
+        assert(g_document[&quot;id&quot;].IsUint());
+        newEvt-&gt;m_id = g_document[&quot;id&quot;].GetUint();
+        QP::QF::PUBLISH(newEvt, nullptr);
+    } else {
         MQTT_CLIENT_LOG_DEBUG(&quot;Command doesn't match{command:%s}&quot;,g_document[&quot;command&quot;].GetString());
     }
 } else {
