@@ -59,15 +59,12 @@ void CMQTTClient::on_publish(int ID) {
 }
 
 void CMQTTClient::on_message(const struct mosquitto_message *message) {
-	char buff[255] = {0};
 	if(m_topics.find(message->topic) != m_topics.end()){
-		MQTT_CLIENT_LOG_INFO("HERE");
-		MQTTMessageRecived *msg = Q_NEW(MQTTMessageRecived, MQTT_MESSAGE_RECIVED_SIG);
-		msg->m_topic = (char*)message->topic;
-		memcpy(buff, message->payload, (MAX_PAYLOAD + 1) * sizeof(char));
-		msg->m_message = buff;
-    	QP::QF::PUBLISH(msg, nullptr);
+		MQTTMessageRecived* msg = Q_NEW(MQTTMessageRecived, MQTT_MESSAGE_RECIVED_SIG);//QP::Q_NEW(MQTTMessageRecived, MQTT_MESSAGE_RECIVED_SIG);
+		msg->m_topic.append((char*)message->topic);
+		msg->m_message.append((char*)message->payload);
 		MQTT_CLIENT_LOG_DEBUG("MQTT Message recived: topic = %s data = %s", msg->m_topic.c_str(), msg->m_message.c_str());
+    	QP::QF::PUBLISH(msg, nullptr);
 	}
 }
 
@@ -90,7 +87,7 @@ common_status_t CMQTTClient::connectToBroker(const char *host, int port){
 	return cmn_success;
 }
 
-common_status_t CMQTTClient::publishMessage(const char *topic, const char *message){
-	MQTT_SUCCESS_CHECK(publish(NULL, topic,strlen(message),message, 1, false) == MOSQ_ERR_SUCCESS, error_unknown, "MQTT Publsih error");
+common_status_t CMQTTClient::publishMessage(const char *topic, const uint8_t *message, const uint16_t size){
+	MQTT_SUCCESS_CHECK(publish(NULL, topic, size, message, 1, false) == MOSQ_ERR_SUCCESS, error_unknown, "MQTT Publsih error");
 	return cmn_success;
 }

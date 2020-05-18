@@ -25,6 +25,6 @@ public:
 
     common_status_t connectToBroker(const char *host, int port);
 
-    common_status_t publishMessage(const char *topic, const char* message);
+    common_status_t publishMessage(const char *topic, const uint8_t *, const uint16_t);
 
 };
