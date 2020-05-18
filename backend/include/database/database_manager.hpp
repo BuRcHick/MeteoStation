@@ -21,7 +21,7 @@ typedef struct {
 char* sensorTypeToString(const sensor_t);
 
 namespace DatabaseManagerN {
-    common_status_t createrDB(const std::string&);
+    common_status_t createDB(const std::string&);
     common_status_t addNewSensor(const std::string&, const sensor_t);
     common_status_t removeSensor(const uint8_t);
     common_status_t addNewType(const std::string&);
@@ -30,4 +30,11 @@ namespace DatabaseManagerN {
     common_status_t updateSensorValue(const uint8_t, const int);
 
     common_status_t getSensorInfo(const uint8_t);
+
+    bool isDBExcist(const std::string&);
+    bool isOpened();
+
+    bool isAllarm();
+
+    common_status_t resetDB(const std::string&);
 }
