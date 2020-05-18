@@ -6,6 +6,17 @@ project("MSBackend")
 
 #set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -DQP_API_VERSION=9999 -O3 -no-pie -pedantic -fno-exceptions -fno-rtti")
 
+include("${CMAKE_SOURCE_DIR}/vendor/rapidjson.cmake")
+
+include_directories(${RAPIDJSON_INCLUDE_DIR})
+
+include_directories(
+    ${CMAKE_SOURCE_DIR}/include
+    ${GFLAGS_INCLUDE_DIR}
+    ${BENCHMARK_INCLUDE_DIR}
+    ${RAPIDJSON_INCLUDE_DIR}
+)
+
 set(QP_DIR $ENV{QPCPP})
 set(QP_PORT ${QP_DIR}/ports/posix)
 
@@ -48,3 +59,4 @@ add_subdirectory(sources)
 
 add_executable(${PROJECT_NAME} backend.cpp)
 target_link_libraries(${PROJECT_NAME} QP pthread sources)
+add_dependencies(${PROJECT_NAME} rapidjson)
