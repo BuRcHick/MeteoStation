@@ -6,6 +6,9 @@ project("MSBackend")
 
 #set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -DQP_API_VERSION=9999 -O3 -no-pie -pedantic -fno-exceptions -fno-rtti")
 
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD 17)
+
 include("${CMAKE_SOURCE_DIR}/vendor/rapidjson.cmake")
 
 include_directories(${RAPIDJSON_INCLUDE_DIR})
