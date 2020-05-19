@@ -61,8 +61,8 @@ void CMQTTClient::on_publish(int ID) {
 void CMQTTClient::on_message(const struct mosquitto_message *message) {
 	if(m_topics.find(message->topic) != m_topics.end()){
 		MQTTMessageRecived* msg = Q_NEW(MQTTMessageRecived, MQTT_MESSAGE_RECIVED_SIG);//QP::Q_NEW(MQTTMessageRecived, MQTT_MESSAGE_RECIVED_SIG);
-		msg->m_topic.append((char*)message->topic);
-		msg->m_message.append((char*)message->payload);
+		msg->m_topic = (char*)message->topic;
+		msg->m_message = (char*)message->payload;
 		MQTT_CLIENT_LOG_DEBUG("MQTT Message recived: topic = %s data = %s", msg->m_topic.c_str(), msg->m_message.c_str());
     	QP::QF::PUBLISH(msg, nullptr);
 	}
