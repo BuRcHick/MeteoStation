@@ -15,15 +15,17 @@ enum eSignals{
     APP_SET_TRESHOLD_SIG,
     APP_GET_SENSORS_SIG,
     APP_SENSOR_SETTINGS_SIG,
-    DB_CREATED_SIG,
-    DB_CB_GET_SENSORS_SIG,
-    DB_CB_ADD_SENSOR_SIG,
-    DB_ERR_SIG,
+    RESET_DB_SIG,
     TIMEOUT_SIG,
     MQTT_START_LOOP_SIG,
     SYSTEM_ALLARM_SIG,
+    DB_CALLBACK_RECIVED_SIG,
     MAX_PUB_SIG,
-    HANDLING_FINISHED_SIG,
+    DB_GET_SENSORS_SIG,
+    DB_ADD_SENSOR_SIG,
+    DB_ERR_SIG,
+    DB_UPDATE_SENSOR_SIG,
+    HANDLING_FINISHED_SIG
 };
 
 enum {ALLARM_TICKS = 100};
@@ -34,6 +36,7 @@ public:
     std::string m_message;
     MQTTMessageRecived(QP::QSignal sig);
 };
+
 class HWAddSensor : public QP::QEvt {
 public:
     sensor_t m_type;
@@ -56,4 +59,10 @@ public:
 
 public:
     HWRemoveSensor(QP::QSignal sig);
+};
+
+class CDBCallbackEvt : public QP::QEvt {
+public:
+    std::string m_data;
+    CDBCallbackEvt(QP::QSignal sig);
 };

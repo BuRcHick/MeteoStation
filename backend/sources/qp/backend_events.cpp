@@ -18,3 +18,8 @@ HWRemoveSensor::HWRemoveSensor(QP::QSignal _sig)
 : QEvt() { 
     this->sig = _sig; 
 }
+
+CDBCallbackEvt::CDBCallbackEvt(QP::QSignal _sig)
+: QEvt() { 
+    this->sig = _sig; 
+}
