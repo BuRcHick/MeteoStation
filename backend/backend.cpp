@@ -9,13 +9,17 @@
 #include "qp/database_cb.hpp"
 #include "logger/logger_api.hpp"
 
+const char* g_FROM_DB_TOPIC = "FROM_DB";
+const char* g_FROM_HW_TOPIC = "FROM_HW";
+const char* g_FROM_APP_TOPIC = "FROM_APP";
+
 uint16_t PORT = 1883;
 std::string ID = "MS_MQTT_ID";
 std::string HOST = "localhost";
 
-const char* g_topics[] = {
-    "HW",
-    "APP"
+const char* g_dbTopics[] = {
+    g_FROM_HW_TOPIC,
+    g_FROM_APP_TOPIC
 };
 
 CMQTTClient g_mqttClient(ID.c_str());
@@ -83,8 +87,8 @@ int main() {
 }
 
 void mqttClientInit(){
-    for (size_t i = 0; i < Q_DIM(g_topics); i++){
-        g_mqttClient.subscribeOnTopic(g_topics[i]);
+    for (size_t i = 0; i < Q_DIM(g_dbTopics); i++){
+        g_mqttClient.subscribeOnTopic(g_dbTopics[i]);
     }
 }
 

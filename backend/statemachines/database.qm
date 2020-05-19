@@ -155,6 +155,7 @@ cbData.push_back(std::move(Q_EVT_CAST(CDBCallbackEvt)-&gt;m_data));</action>
      </tran>
      <tran trig="DB_ADD_SENSOR">
       <action>DATABASE_CB_LOG_DEBUG(&quot;recived:%s&quot;, cbData.back().c_str());
+//TODO Add MQTT PUBLISH EVT
 cbData.clear();</action>
       <tran_glyph conn="40,34,3,-1,20">
        <action box="1,-2,19,2"/>
@@ -196,6 +197,8 @@ $declare(DatabaseSM::CDatabaseSM)</text>
 #include &quot;qpcpp.hpp&quot;
 #include &quot;qp/backend_events.hpp&quot;
 #include &quot;rapidjson/document.h&quot;
+
+extern const char* g_DB_TO_HW_TOPIC;
 
 $declare(DatabaseSM::CDatabaseCB)</text>
     </file>

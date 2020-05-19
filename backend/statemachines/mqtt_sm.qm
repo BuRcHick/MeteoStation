@@ -45,13 +45,13 @@ QP::QF::PUBLISH(Q_NEW(QP::QEvt, MQTT_START_LOOP_SIG), nullptr);</action>
 g_document.Parse(Q_EVT_CAST(MQTTMessageRecived)-&gt;m_message.c_str());
 MQTT_CLIENT_LOG_DEBUG(&quot;Successfuly parsed&quot;);</action>
       <choice target="../../../2">
-       <guard>Q_EVT_CAST(MQTTMessageRecived)-&gt;m_topic == HW_TOPIC</guard>
+       <guard>Q_EVT_CAST(MQTTMessageRecived)-&gt;m_topic == g_FROM_HW_TOPIC</guard>
        <choice_glyph conn="54,28,4,3,-14,30">
         <action box="1,-14,32,3"/>
        </choice_glyph>
       </choice>
       <choice target="../../../3">
-       <guard>Q_EVT_CAST(MQTTMessageRecived)-&gt;m_topic == APP_TOPIC</guard>
+       <guard>Q_EVT_CAST(MQTTMessageRecived)-&gt;m_topic == g_FROM_APP_TOPIC</guard>
        <choice_glyph conn="54,28,4,3,35,30">
         <action box="1,32,30,2"/>
        </choice_glyph>
@@ -117,8 +117,8 @@ this-&gt;POST(Q_NEW(QP::QEvt, HANDLING_FINISHED_SIG), this);</entry>
      <text>#pragma once
 #include &quot;qpcpp.hpp&quot;
 
-#define HW_TOPIC &quot;HW&quot;
-#define APP_TOPIC &quot;APP&quot;
+extern const char* g_FROM_HW_TOPIC;
+extern const char* g_FROM_APP_TOPIC;
 
 $declare(MQTT::CMQTTLoop)
 
