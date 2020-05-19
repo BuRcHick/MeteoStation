@@ -6,6 +6,7 @@
 #include "qp/database_sm.hpp"
 #include "qp/backend_events.hpp"
 #include "qp/mqtt_client_sm.hpp"
+#include "qp/database_cb.hpp"
 #include "logger/logger_api.hpp"
 
 uint16_t PORT = 1883;
@@ -37,6 +38,10 @@ void QP::QF_onClockTick(void) {
 static DATABASE_SM::CDatabaseSM l_database;
 QP::QActive * const AO_Database = &l_database;
 
+static DATABASE_SM::CDatabaseCB l_databaseCB;
+QP::QActive * const DATABASE_SM::AO_DatabaseCB = &l_databaseCB;
+
+
 static CMQTTLoop l_mqttLoop;
 QP::QActive * const AO_MQTTLoop = &l_mqttLoop;
 
@@ -54,6 +59,7 @@ int main() {
     static QF_MPOOL_EL(HWAddSensor) medPoolSto[10];
     static QF_MPOOL_EL(MQTTMessageRecived) largePoolSto[10];
     static QP::QEvt const *database_queueSto[10];
+    static QP::QEvt const *databaseCB_queueSto[10];
     static QP::QEvt const *mqttLoop_queueSto[2];
     static QP::QEvt const *mqttEcvHndlr_queueSto[10];
     QP::QF::init(); // initialize the framework and the underlying RT kernel
@@ -64,10 +70,13 @@ int main() {
     AO_Database->start(1U, // priority
                      database_queueSto, Q_DIM(database_queueSto),
                      nullptr, 0U); // no stack
-    AO_MQTTLoop->start(2U, // priority
+    DATABASE_SM::AO_DatabaseCB->start(2U, // priority
+                     databaseCB_queueSto, Q_DIM(databaseCB_queueSto),
+                     nullptr, 0U); // no stack
+    AO_MQTTLoop->start(3U, // priority
                      mqttLoop_queueSto, Q_DIM(mqttLoop_queueSto),
                      nullptr, 0U); // no stack
-    AO_MQTTEvtHandler->start(3U, // priority
+    AO_MQTTEvtHandler->start(4U, // priority
                      mqttEcvHndlr_queueSto, Q_DIM(mqttEcvHndlr_queueSto),
                      nullptr, 0U); // no stack
     return QP::QF::run();

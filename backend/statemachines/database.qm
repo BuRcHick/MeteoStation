@@ -4,6 +4,7 @@
  <package name="DatabaseSM" stereotype="0x02" namespace="DATABASE_SM">
   <class name="CDatabaseSM" superclass="qpcpp::QActive">
    <attribute name="m_timeEvt" type="QP::QTimeEvt" visibility="0x02" properties="0x00"/>
+   <attribute name="result" type="common_status_t" visibility="0x02" properties="0x00"/>
    <operation name="CDatabaseSM" type="" visibility="0x00" properties="0x00">
     <code>: QActive(Q_STATE_CAST(&amp;CDatabaseSM::initial)),
     m_timeEvt(this, TIMEOUT_SIG)</code>
@@ -16,11 +17,8 @@ subscribe(HW_REMOVE_SENSOR_SIG);
 subscribe(APP_SET_TRESHOLD_SIG);
 subscribe(APP_GET_SENSORS_SIG);
 subscribe(APP_SENSOR_SETTINGS_SIG);
-subscribe(DB_CREATED_SIG);
-subscribe(DB_CB_GET_SENSORS_SIG);
-subscribe(DB_CB_ADD_SENSOR_SIG);
-subscribe(DB_ERR_SIG);</action>
-     <initial_glyph conn="2,2,4,3,24,4">
+subscribe(RESET_DB_SIG);</action>
+     <initial_glyph conn="2,2,4,3,20,62">
       <action box="0,-2,34,21"/>
      </initial_glyph>
     </initial>
@@ -29,40 +27,56 @@ subscribe(DB_ERR_SIG);</action>
 if(!DatabaseManagerN::isOpened()) {
     DatabaseManagerN::createDB(DB_NAME);
 }</entry>
-     <tran trig="HW_ADD_SENSOR" target="../../3">
-      <action>DatabaseManagerN::addNewSensor(Q_EVT_CAST(HWAddSensor)-&gt;m_title, Q_EVT_CAST(HWAddSensor)-&gt;m_type);</action>
-      <tran_glyph conn="6,42,3,3,44,28,24">
+     <tran trig="HW_ADD_SENSOR">
+      <action>result = DatabaseManagerN::addNewSensor(Q_EVT_CAST(HWAddSensor)-&gt;m_title, Q_EVT_CAST(HWAddSensor)-&gt;m_type);
+if(result == cmn_success) {
+    AO_DatabaseCB-&gt;POST(Q_NEW(QP::QEvt, DB_ADD_SENSOR_SIG), this);
+} else {
+    DATABASE_LOG_ERROR(&quot;Add sensor error: %s&quot;, statusToString(result));
+}</action>
+      <tran_glyph conn="64,22,3,-1,18">
        <action box="0,-2,15,2"/>
       </tran_glyph>
      </tran>
-     <tran trig="HW_REMOVE_SENSOR" target="../../3">
-      <action>DatabaseManagerN::removeSensor(Q_EVT_CAST(HWRemoveSensor)-&gt;m_id);</action>
-      <tran_glyph conn="6,48,3,3,44,22,24">
-       <action box="0,-2,19,2"/>
-      </tran_glyph>
-     </tran>
-     <tran trig="HW_UPDATE_SENSOR" target="../../3">
-      <action>DatabaseManagerN::updateSensorValue(Q_EVT_CAST(HWSensorValueUpdate)-&gt;m_id, Q_EVT_CAST(HWSensorValueUpdate)-&gt;m_value);</action>
-      <tran_glyph conn="6,36,3,3,44,34,24">
+     <tran trig="HW_UPDATE_SENSOR">
+      <action>result = DatabaseManagerN::updateSensorValue(Q_EVT_CAST(HWSensorValueUpdate)-&gt;m_id, Q_EVT_CAST(HWSensorValueUpdate)-&gt;m_value);
+if(result == cmn_success) {
+    AO_DatabaseCB-&gt;POST(Q_NEW(QP::QEvt, DB_UPDATE_SENSOR_SIG), this);
+} else {
+    DATABASE_LOG_ERROR(&quot;Update sensor error: %s&quot;, statusToString(result));
+}</action>
+      <tran_glyph conn="64,16,3,-1,18">
        <action box="0,-2,17,3"/>
       </tran_glyph>
      </tran>
-     <tran trig="APP_SET_TRESHOLD" target="../../3">
-      <tran_glyph conn="6,54,3,3,44,16,24">
-       <action box="0,-2,17,2"/>
-      </tran_glyph>
-     </tran>
-     <tran trig="APP_GET_SENSORS" target="../../3">
-      <tran_glyph conn="6,60,3,3,44,10,24">
-       <action box="0,-2,16,2"/>
-      </tran_glyph>
-     </tran>
-     <tran trig="APP_SENSOR_SETTINGS" target="../../3">
-      <tran_glyph conn="6,66,3,3,44,4,24">
+     <tran trig="HW_REMOVE_SENSOR">
+      <action>result = DatabaseManagerN::removeSensor(Q_EVT_CAST(HWRemoveSensor)-&gt;m_id);</action>
+      <tran_glyph conn="64,28,3,-1,18">
        <action box="0,-2,19,2"/>
       </tran_glyph>
      </tran>
-     <state_glyph node="6,22,38,46">
+     <tran trig="APP_SET_TRESHOLD">
+      <tran_glyph conn="64,34,3,-1,18">
+       <action box="0,-2,17,2"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="APP_GET_SENSORS">
+      <tran_glyph conn="64,40,3,-1,18">
+       <action box="0,-2,16,2"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="APP_SENSOR_SETTINGS">
+      <tran_glyph conn="64,46,3,-1,18">
+       <action box="0,-2,19,2"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="RESET_DB">
+      <action>DatabaseManagerN::resetDB(DB_NAME);</action>
+      <tran_glyph conn="64,52,3,-1,30">
+       <action box="0,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="64,2,36,52">
       <entry box="1,2,33,10"/>
      </state_glyph>
     </state>
@@ -72,79 +86,96 @@ if(!DatabaseManagerN::isOpened()) {
       <choice target="../../../1">
        <guard>!DatabaseManagerN::isAllarm()</guard>
        <action>m_timeEvt.disarm();</action>
-       <choice_glyph conn="68,37,4,1,-11,-24">
-        <action box="-23,-10,24,5"/>
+       <choice_glyph conn="38,38,4,3,-32,26">
+        <action box="1,-36,24,5"/>
        </choice_glyph>
       </choice>
       <choice target="../..">
        <guard>else</guard>
        <action>QP::QF::PUBLISH(Q_NEW(QP::QEvt, SYSTEM_ALLARM_SIG), nullptr);</action>
-       <choice_glyph conn="68,37,4,3,11,6">
-        <action box="0,8,10,2"/>
+       <choice_glyph conn="38,38,4,1,16,-6">
+        <action box="-5,14,10,2"/>
        </choice_glyph>
       </choice>
-      <tran_glyph conn="104,37,1,-1,-36">
+      <tran_glyph conn="32,38,1,-1,6">
        <action box="-11,-2,11,2"/>
       </tran_glyph>
      </tran>
      <tran trig="HW_UPDATE_SENSOR">
       <action>//DatabaseManagerN::updateSensorValue(m_id, m_value);    </action>
-      <tran_glyph conn="104,43,1,-1,-21">
+      <tran_glyph conn="32,45,1,-1,-21">
        <action box="-19,-2,22,2"/>
       </tran_glyph>
      </tran>
      <tran trig="HW_REMOVE_SENSOR">
       <action>//DatabaseManagerN::removeSensor(e-&gt;m_id);</action>
-      <tran_glyph conn="104,49,1,-1,-21">
+      <tran_glyph conn="32,51,1,-1,-21">
        <action box="-19,-2,19,2"/>
       </tran_glyph>
      </tran>
-     <state_glyph node="74,22,30,34">
+     <state_glyph node="2,24,30,32">
       <entry box="1,2,29,7"/>
      </state_glyph>
     </state>
-    <state name="callbackWaiting">
-     <documentation>DATABASE_LOG_DEBUG(&quot;Callback waiting&quot;);</documentation>
-     <entry>DATABASE_LOG_DEBUG(&quot;Callback waiting&quot;);</entry>
-     <tran trig="DB_CB_GET_SENSORS" target="../../1">
-      <tran_glyph conn="104,82,1,0,2,-62,-64,2">
-       <action box="-18,-2,17,2"/>
+    <state_diagram size="133,106"/>
+   </statechart>
+  </class>
+  <class name="CDatabaseCB" superclass="qpcpp::QActive">
+   <attribute name="doc" type="rapidjson::Document" visibility="0x00" properties="0x00"/>
+   <operation name="CDatabaseCB" type="" visibility="0x00" properties="0x00">
+    <code>: QActive(Q_STATE_CAST(&amp;CDatabaseCB::initial))</code>
+   </operation>
+   <statechart properties="0x00">
+    <initial target="../1">
+     <action>subscribe(DB_CALLBACK_RECIVED_SIG);</action>
+     <initial_glyph conn="2,4,4,3,4,38">
+      <action box="1,-1,41,6"/>
+     </initial_glyph>
+    </initial>
+    <state name="callbackHandling">
+     <entry>DATABASE_CB_LOG_DEBUG(&quot;Callback waiting&quot;);
+cbData.clear();</entry>
+     <tran trig="SYSTEM_ALLARM">
+      <tran_glyph conn="40,10,3,-1,20">
+       <action box="1,-2,16,2"/>
       </tran_glyph>
      </tran>
-     <tran trig="DB_CB_ADD_SENSOR" target="../../1">
-      <tran_glyph conn="104,86,1,0,2,-66,-64,2">
-       <action box="-18,-2,19,2"/>
+     <tran trig="DB_CALLBACK_RECIVED">
+      <action>rapidjson::Document recived;
+cbData.push_back(std::move(Q_EVT_CAST(CDBCallbackEvt)-&gt;m_data));</action>
+      <tran_glyph conn="40,14,3,-1,20">
+       <action box="1,-2,19,2"/>
       </tran_glyph>
      </tran>
-     <tran trig="DB_ERR" target="../../4">
-      <tran_glyph conn="104,90,1,1,-60">
-       <action box="-10,-2,10,2"/>
+     <tran trig="DB_GET_SENSORS">
+      <action>cbData.clear();</action>
+      <tran_glyph conn="40,30,3,-1,20">
+       <action box="1,-2,19,2"/>
       </tran_glyph>
      </tran>
-     <tran trig="SYSTEM_ALLARM" target="../../2">
-      <tran_glyph conn="104,64,1,3,-36,-16,6">
-       <action box="-16,-2,16,2"/>
+     <tran trig="DB_ADD_SENSOR">
+      <action>DATABASE_CB_LOG_DEBUG(&quot;recived:%s&quot;, cbData.back().c_str());
+cbData.clear();</action>
+      <tran_glyph conn="40,34,3,-1,20">
+       <action box="1,-2,19,2"/>
       </tran_glyph>
      </tran>
-     <state_glyph node="74,58,30,34">
+     <tran trig="DB_UPDATE_SENSOR">
+      <action>cbData.clear();</action>
+      <tran_glyph conn="40,26,3,-1,20">
+       <action box="1,-2,18,2"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="40,4,26,34">
       <entry box="1,2,6,2"/>
      </state_glyph>
     </state>
-    <state name="createNewDB">
-     <entry>DatabaseManagerN::resetDB(DB_NAME);
-this-&gt;POST(Q_NEW(QP::QEvt, DB_CREATED_SIG), this);</entry>
-     <tran trig="DB_CREATED" target="../../1">
-      <tran_glyph conn="6,90,3,3,-4,-62,4">
-       <action box="0,-1,13,2"/>
-      </tran_glyph>
-     </tran>
-     <state_glyph node="6,72,38,21">
-      <entry box="1,2,37,6"/>
-     </state_glyph>
-    </state>
-    <state_diagram size="132,103"/>
+    <state_diagram size="77,47"/>
    </statechart>
   </class>
+  <attribute name="AO_DatabaseCB" type="QP::QActive * const" visibility="0x00" properties="0x00">
+   <code> = &amp;l_databaseCB;</code>
+  </attribute>
  </package>
  <directory name="../">
   <directory name="include">
@@ -156,7 +187,17 @@ this-&gt;POST(Q_NEW(QP::QEvt, DB_CREATED_SIG), this);</entry>
 
 #define DB_NAME &quot;backend.db&quot;
 
+$declare(DatabaseSM::AO_DatabaseCB)
+
 $declare(DatabaseSM::CDatabaseSM)</text>
+    </file>
+    <file name="database_cb.hpp">
+     <text>#pragma once
+#include &quot;qpcpp.hpp&quot;
+#include &quot;qp/backend_events.hpp&quot;
+#include &quot;rapidjson/document.h&quot;
+
+$declare(DatabaseSM::CDatabaseCB)</text>
     </file>
    </directory>
   </directory>
@@ -167,6 +208,7 @@ $declare(DatabaseSM::CDatabaseSM)</text>
 #include &quot;database/database_manager.hpp&quot;
 #include &quot;qp/backend_events.hpp&quot;
 #include &quot;logger/logger_api.hpp&quot;
+#include &quot;common_status.hpp&quot;
 
 #define DATABASE_PREF &quot;QP Database:&quot;
 #define DATABASE_LOG_ERROR(fmt, ...) CLogger::getLogger()-&gt;msgToLog(log_err, DATABASE_PREF fmt, ##__VA_ARGS__)
@@ -174,8 +216,31 @@ $declare(DatabaseSM::CDatabaseSM)</text>
 #define DATABASE_LOG_INFO(fmt, ...) CLogger::getLogger()-&gt;msgToLog(log_info, DATABASE_PREF fmt, ##__VA_ARGS__)
 #define DATABASE_LOG_TRACE(fmt, ...) CLogger::getLogger()-&gt;msgToLog(log_trace, DATABASE_PREF fmt, ##__VA_ARGS__)
 
+Q_DEFINE_THIS_FILE
 
 $define(DatabaseSM::CDatabaseSM)</text>
+    </file>
+    <file name="database_cb.cpp">
+     <text>#include &lt;vector&gt;
+#include &lt;string&gt;
+#include &lt;mutex&gt;
+#include &quot;qp/database_cb.hpp&quot;
+#include &quot;qp/backend_events.hpp&quot;
+#include &quot;logger/logger_api.hpp&quot;
+#include &quot;common_status.hpp&quot;
+
+#define DATABASE_CB_PREF &quot;QP Database Callback:&quot;
+#define DATABASE_CB_LOG_ERROR(fmt, ...) CLogger::getLogger()-&gt;msgToLog(log_err, DATABASE_CB_PREF fmt, ##__VA_ARGS__)
+#define DATABASE_CB_LOG_DEBUG(fmt, ...) CLogger::getLogger()-&gt;msgToLog(log_dbg, DATABASE_CB_PREF fmt, ##__VA_ARGS__)
+#define DATABASE_CB_LOG_INFO(fmt, ...) CLogger::getLogger()-&gt;msgToLog(log_info, DATABASE_CB_PREF fmt, ##__VA_ARGS__)
+#define DATABASE_CB_LOG_TRACE(fmt, ...) CLogger::getLogger()-&gt;msgToLog(log_trace, DATABASE_CB_PREF fmt, ##__VA_ARGS__)
+
+Q_DEFINE_THIS_FILE
+
+std::vector&lt;std::string&gt; cbData;
+extern std::mutex g_CBMutex;
+
+$define(DatabaseSM::CDatabaseCB)</text>
     </file>
    </directory>
   </directory>
