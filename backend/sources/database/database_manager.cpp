@@ -2,6 +2,9 @@
 #include "database/database_manager.hpp"
 #include "database/database_api.hpp"
 #include "logger/logger_api.hpp"
+#include "qp/backend_events.hpp"
+#include "rapidjson/writer.h"
+#include "rapidjson/stringbuffer.h"
 
 #define PREF "DB Manager: "
 #define DB_MANAGER_LOG_ERROR(fmt, ...) CLogger::getLogger()->msgToLog(log_err, PREF fmt, ##__VA_ARGS__)
@@ -34,9 +37,15 @@ static const char* s_create_sensors_table = \
 	    "sensor_id INTEGER PRIMARY KEY AUTOINCREMENT,"\
         "sensor_title TEXT NOT NULL,"\
   	    "sensor_type INTEGER NOT NULL,"\
-        "sensor_value INTEGER NOT NULL,"\
         "FOREIGN KEY (sensor_type)"\
         "REFERENCES SensorTypes(type_id));";
+
+static const char* s_create_sensors_log = \
+        "CREATE TABLE IF NOT EXISTS Log("\
+	    "sensor_id INTEGER NULL,"\
+        "sensor_value INTEGER NOT NULL,"\
+        "FOREIGN KEY (sensor_id)"\
+        "REFERENCES Sensors(sensor_id));";
 
 char* sensorTypeToString(const sensor_t sensorType) {
     switch (sensorType)
@@ -62,7 +71,8 @@ common_status_t DatabaseManagerN::createDB(const std::string& dbName) {
     if(!isDBExcist(dbName)){
         DB_MANAGER_CHECK_ERR_LOG(s_db->openDB(dbName) == cmn_success, error_unknown, "Filed to open DB");
         DB_MANAGER_CHECK_ERR_LOG(s_db->writeCommand(s_create_sensors_type_table) == cmn_success, error_unknown, "Filed to create table");
-        DB_MANAGER_CHECK_ERR_LOG(s_db->writeCommand(s_create_sensors_table) == cmn_success, error_unknown, "Filed to create table");  
+        DB_MANAGER_CHECK_ERR_LOG(s_db->writeCommand(s_create_sensors_table) == cmn_success, error_unknown, "Filed to create table");
+        DB_MANAGER_CHECK_ERR_LOG(s_db->writeCommand(s_create_sensors_log) == cmn_success, error_unknown, "Filed to create table");  
     }else {
         DB_MANAGER_CHECK_ERR_LOG(s_db->openDB(dbName) == cmn_success, error_unknown, "Filed to open DB");
     }
@@ -76,9 +86,10 @@ common_status_t DatabaseManagerN::addNewSensor(const std::string& sensorTitle, c
     DB_MANAGER_CHECK_ERR_LOG(sensorTypeToString(sensorType), error_inv_arg, "Invalid sensor type");
     char cmndBuff[BUFF_SIZE] = {0};
     sprintf(cmndBuff,\
-            "INSERT INTO Sensors(sensor_title, sensor_type, sensor_value)"\
-            "VALUES(\"%s\", %d, 0);", sensorTitle.c_str(), sensorType);
+            "INSERT INTO Sensors(sensor_title, sensor_type)"\
+            "VALUES(\"%s\", %d);", sensorTitle.c_str(), sensorType);
     DB_MANAGER_CHECK_ERR_LOG(s_db->writeCommand(cmndBuff) == cmn_success, error_unknown, "Filed to insert sensor into the table");
+    getTableInfo("Sensors");
     return cmn_success;
 }
 
@@ -136,9 +147,8 @@ common_status_t DatabaseManagerN::updateSensorValue(const uint8_t id, const int 
     char cmndBuff[BUFF_SIZE] = {0};
     CDatabase* s_db = CDatabase::getDB();
     sprintf(cmndBuff,\
-            "UPDATE Sensors"\
-            "SET sensor_value = %d"\
-            "WHERE sensor_id = %d;", value, id);
+            "INSERT INTO Log(sensor_id, sensor_value)"\
+            "VALUES(%d, %d);", id, value);
     DB_MANAGER_CHECK_ERR_LOG(s_db->writeCommand(cmndBuff) == cmn_success, error_unknown, "Filed to update sensor's value");
     return cmn_success;
 }
@@ -168,3 +178,14 @@ common_status_t DatabaseManagerN::resetDB(const std::string& dbName) {
     std::filesystem::remove(dbName);
     return createDB(dbName);
 }
+
+common_status_t DatabaseManagerN::getTableInfo(const std::string& table) {
+    DB_MANAGER_LOG_TRACE("%s tablse:%s", __FUNCTION__, table.c_str());
+    char cmndBuff[BUFF_SIZE] = {0};
+    CDatabase* s_db = CDatabase::getDB();
+    sprintf(cmndBuff,\
+            "SELECT *"\
+            "FROM %s;", table.c_str());
+    DB_MANAGER_CHECK_ERR_LOG(s_db->writeCommand(cmndBuff) == cmn_success, error_unknown, "Filed to update sensor's value");
+    return cmn_success;
+}    
