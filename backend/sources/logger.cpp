@@ -22,6 +22,22 @@ static const char *s_logTypeToString(log_type_t type) {
 	}
 }
 
+const char* statusToString(common_status_t status) {
+	switch (status)
+	{
+	case cmn_success:
+		return "SUCCESS";
+	case error_unknown:
+		return "UNKNOWN ERROR";
+	case error_inv_arg:
+		return "INVALID ARGS";
+	case status_timeout:
+		return "TIMEOUT";
+	default:
+		return "UKNOWN";
+	}
+}
+
 CLogger::CLogger() {
 	try {
 		logFile = fopen(s_logFileName, "a");

@@ -6,3 +6,5 @@ typedef enum {
 	error_inv_arg,
 	status_timeout
 }common_status_t;
+
+const char* statusToString(common_status_t status);
