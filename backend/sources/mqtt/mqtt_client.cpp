@@ -87,7 +87,7 @@ common_status_t CMQTTClient::connectToBroker(const char *host, int port){
 	return cmn_success;
 }
 
-common_status_t CMQTTClient::publishMessage(const char *topic, const uint8_t *message, const uint16_t size){
+common_status_t CMQTTClient::publishMessage(const char *topic, const char *message, const uint16_t size){
 	MQTT_SUCCESS_CHECK(publish(NULL, topic, size, message, 1, false) == MOSQ_ERR_SUCCESS, error_unknown, "MQTT Publsih error");
 	return cmn_success;
 }

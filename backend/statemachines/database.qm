@@ -148,14 +148,27 @@ cbData.push_back(std::move(Q_EVT_CAST(CDBCallbackEvt)-&gt;m_data));</action>
       </tran_glyph>
      </tran>
      <tran trig="DB_GET_SENSORS">
-      <action>cbData.clear();</action>
+      <action>for(auto data : cbData) {
+    g_mqttClient.publishMessage(g_FROM_DB_TOPIC, data.c_str(), data.length());
+};
+cbData.clear();</action>
       <tran_glyph conn="40,30,3,-1,20">
        <action box="1,-2,19,2"/>
       </tran_glyph>
      </tran>
      <tran trig="DB_ADD_SENSOR">
       <action>DATABASE_CB_LOG_DEBUG(&quot;recived:%s&quot;, cbData.back().c_str());
-//TODO Add MQTT PUBLISH EVT
+doc.Parse(cbData.back().c_str());
+doc.RemoveMember(&quot;sensor_title&quot;);
+doc.RemoveMember(&quot;sensor_type&quot;);
+rapidjson::Value key(&quot;command&quot;, doc.GetAllocator());
+rapidjson::Value value(&quot;NEW_SENSOR_ADDED&quot;, doc.GetAllocator());
+doc.AddMember(key, value, doc.GetAllocator());
+rapidjson::StringBuffer s;
+rapidjson::Writer&lt;rapidjson::StringBuffer&gt; writer(s);
+doc.Accept(writer);
+DATABASE_CB_LOG_DEBUG(&quot;Publishing:%s&quot;, s.GetString());
+g_mqttClient.publishMessage(g_FROM_DB_TOPIC, s.GetString(), strlen(s.GetString()));
 cbData.clear();</action>
       <tran_glyph conn="40,34,3,-1,20">
        <action box="1,-2,19,2"/>
@@ -197,8 +210,10 @@ $declare(DatabaseSM::CDatabaseSM)</text>
 #include &quot;qpcpp.hpp&quot;
 #include &quot;qp/backend_events.hpp&quot;
 #include &quot;rapidjson/document.h&quot;
+#include &quot;rapidjson/stringbuffer.h&quot;
+#include &quot;rapidjson/writer.h&quot;
 
-extern const char* g_DB_TO_HW_TOPIC;
+extern const char* g_FROM_DB_TOPIC;
 
 $declare(DatabaseSM::CDatabaseCB)</text>
     </file>
@@ -231,6 +246,7 @@ $define(DatabaseSM::CDatabaseSM)</text>
 #include &quot;qp/backend_events.hpp&quot;
 #include &quot;logger/logger_api.hpp&quot;
 #include &quot;common_status.hpp&quot;
+#include &quot;mqtt/mqtt_client_api.hpp&quot;
 
 #define DATABASE_CB_PREF &quot;QP Database Callback:&quot;
 #define DATABASE_CB_LOG_ERROR(fmt, ...) CLogger::getLogger()-&gt;msgToLog(log_err, DATABASE_CB_PREF fmt, ##__VA_ARGS__)
@@ -242,6 +258,7 @@ Q_DEFINE_THIS_FILE
 
 std::vector&lt;std::string&gt; cbData;
 extern std::mutex g_CBMutex;
+extern CMQTTClient g_mqttClient;
 
 $define(DatabaseSM::CDatabaseCB)</text>
     </file>
