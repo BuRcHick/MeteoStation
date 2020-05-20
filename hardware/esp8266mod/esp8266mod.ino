@@ -1,9 +1,20 @@
 #include <vector>
 #include <cstdint>
+#include "ESP8266WiFi.h"
+#include "PubSubClient.h"
 #include "Adafruit_BME280.h"
 #include "Adafruit_Sensor.h"
 #include "Wire.h"
 #include <SPI.h>
+
+
+//------------------WIFI-SETTINGS-------------------------------------------------------------------
+#define STASSID "ACCESS_POINT"  //Enter your access point ssid
+#define STAPSK  "PASSWORD"      //Enter access point password
+
+//------------------MQTT-SETTINGS-------------------------------------------------------------------
+#define MQTT_SERVER "localhost"
+#define MQTT_SERVER_PORT 1833
 
 //------------------BME-SETTINGS-------------------------------------------------------------------
 #define SEALEVELPRESSURE_HPA (1013.25)
@@ -86,7 +97,22 @@ static void s_printValues() {
 
 void setup() {
     Serial.begin(115200);
-        
+    //------------------------------WIFI-CONFIGURATION---------------------------------------------------
+    Serial.println();
+    Serial.println();
+    Serial.print("Connecting to ");
+    Serial.println(ssid);
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(STASSID, STAPSK);
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+        Serial.print(".");
+    }
+    Serial.println("");
+    Serial.println("WiFi connected");
+    Serial.println("IP address: ");
+    Serial.println(WiFi.localIP());
+    
     //------------------------------SENSORS-CONFIGURATION---------------------------------------------------
     for (size_t i = 0; i < SENSORS_COUNT; i++) {
         g_sensors[i].id = i;
@@ -96,6 +122,12 @@ void setup() {
 }
 
 void loop() {
+    Serial.print("connecting to ");
+    Serial.print(host);
+    Serial.print(':');
+    Serial.println(port);
+    WiFiClient wifiClient;
+    PubSubClient client(mqtt_server, 1883, wifiClient); // 1883 is the listener port for the Broker
     s_monitorValues();
     s_printValues();
     delay(1000);
