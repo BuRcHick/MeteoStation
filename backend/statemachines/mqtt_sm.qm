@@ -44,13 +44,13 @@ QP::QF::PUBLISH(Q_NEW(QP::QEvt, MQTT_START_LOOP_SIG), nullptr);</action>
       <action>MQTT_CLIENT_LOG_DEBUG(&quot;Recived new message{%s}&quot;, Q_EVT_CAST(MQTTMessageRecived)-&gt;m_message.c_str());
 g_document.Parse(Q_EVT_CAST(MQTTMessageRecived)-&gt;m_message.c_str());
 MQTT_CLIENT_LOG_DEBUG(&quot;Successfuly parsed&quot;);</action>
-      <choice target="../../../2">
+      <choice target="../../../3">
        <guard>Q_EVT_CAST(MQTTMessageRecived)-&gt;m_topic == g_FROM_HW_TOPIC</guard>
        <choice_glyph conn="54,28,4,3,-14,30">
         <action box="1,-14,32,3"/>
        </choice_glyph>
       </choice>
-      <choice target="../../../3">
+      <choice target="../../../2">
        <guard>Q_EVT_CAST(MQTTMessageRecived)-&gt;m_topic == g_FROM_APP_TOPIC</guard>
        <choice_glyph conn="54,28,4,3,35,30">
         <action box="1,32,30,2"/>
@@ -63,6 +63,9 @@ MQTT_CLIENT_LOG_DEBUG(&quot;Successfuly parsed&quot;);</action>
      <state_glyph node="5,12,43,20">
       <entry box="1,2,6,2"/>
      </state_glyph>
+    </state>
+    <state name="appEvtHandler">
+     <state_glyph node="84,59,28,20"/>
     </state>
     <state name="hwEvtHandler">
      <entry brief="Handle Commands">if(g_document[&quot;command&quot;].IsString()){
@@ -87,6 +90,8 @@ MQTT_CLIENT_LOG_DEBUG(&quot;Successfuly parsed&quot;);</action>
         assert(g_document[&quot;id&quot;].IsUint());
         newEvt-&gt;m_id = g_document[&quot;id&quot;].GetUint();
         QP::QF::PUBLISH(newEvt, nullptr);
+    } else if(command == &quot;GET_SENSORS&quot;){
+        QP::QF::PUBLISH(Q_NEW(QP::QEvt, GET_SENSORS_SIG), nullptr);
     } else {
         MQTT_CLIENT_LOG_DEBUG(&quot;Command doesn't match{command:%s}&quot;,g_document[&quot;command&quot;].GetString());
     }
@@ -102,9 +107,6 @@ this-&gt;POST(Q_NEW(QP::QEvt, HANDLING_FINISHED_SIG), this);</entry>
      <state_glyph node="84,10,28,40">
       <entry box="1,2,25,3"/>
      </state_glyph>
-    </state>
-    <state name="appEvtHandler">
-     <state_glyph node="84,59,28,20"/>
     </state>
     <state_diagram size="114,85"/>
    </statechart>

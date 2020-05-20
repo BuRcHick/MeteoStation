@@ -11,7 +11,10 @@
  <group name="windows">
   <item id="../::sources::qp::database_sm.cpp">0,0,596,300</item>
   <item id="../::include::qp::database_sm.hpp">8,36,984,763</item>
-  <item id="DatabaseSM::CDatabaseSM::SM">0,0,1066,810,*</item>
+  <item id="DatabaseSM::CDatabaseSM::SM">-78,0,1070,836</item>
+  <item id="DatabaseSM::CDatabaseCB::SM">0,0,984,594,*</item>
+  <item id="../::include::qp::database_cb.hpp">0,300,596,300</item>
+  <item id="../::sources::qp::database_cb.cpp">396,0,596,300</item>
  </group>
  <group name="search">
   <item name="options">2032128</item>

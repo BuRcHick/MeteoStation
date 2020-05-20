@@ -11,8 +11,8 @@
  <group name="windows">
   <item id="MQTT::CMQTTLoop::SM">-410,0,1402,763</item>
   <item id="../::include::qp::mqtt_client_sm.hpp">0,499,596,300</item>
-  <item id="../::sources::qp::mqtt_client_sm.cpp">0,0,984,763,*</item>
-  <item id="MQTT::CMQTTEvtHandler::SM">8,36,984,763</item>
+  <item id="../::sources::qp::mqtt_client_sm.cpp">8,36,984,763</item>
+  <item id="MQTT::CMQTTEvtHandler::SM">0,0,984,735,*</item>
  </group>
  <group name="search">
   <item name="options">2032128</item>
