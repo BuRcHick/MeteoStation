@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model version="5.0.1" links="0">
+ <framework name="qpcpp"/>
+ <package name="MQTT" stereotype="0x02">
+  <class name="CMQTTLoop" superclass="qpcpp::QActive">
+   <operation name="CMQTTLoop" type="" visibility="0x00" properties="0x00">
+    <code>: QActive(Q_STATE_CAST(&amp;CMQTTLoop::initial))</code>
+   </operation>
+   <statechart properties="0x02">
+    <initial target="../1">
+     <action>subscribe(MQTT_START_LOOP_SIG);</action>
+     <initial_glyph conn="2,6,5,3,28">
+      <action box="0,-5,32,5"/>
+     </initial_glyph>
+    </initial>
+    <state name="loop">
+     <tran trig="MQTT_START_LOOP">
+      <action>MQTT_CLIENT_LOG_DEBUG(&quot;Start loop&quot;);
+mqttClietLoop();</action>
+      <tran_glyph conn="30,16,3,-1,26">
+       <action box="0,-2,18,2"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="30,4,36,20"/>
+    </state>
+    <state_diagram size="68,26"/>
+   </statechart>
+  </class>
+  <class name="CMQTTEvtHandler" superclass="qpcpp::QActive">
+   <operation name="CMQTTEvtHandler" type="" visibility="0x00" properties="0x00">
+    <code>: QActive(Q_STATE_CAST(&amp;CMQTTEvtHandler::initial))</code>
+   </operation>
+   <statechart properties="0x00">
+    <initial target="../1">
+     <action>subscribe(MQTT_MESSAGE_RECIVED_SIG);
+QP::QF::PUBLISH(Q_NEW(QP::QEvt, MQTT_START_LOOP_SIG), nullptr);</action>
+     <initial_glyph conn="2,6,4,3,10,3">
+      <action box="0,-5,38,9"/>
+     </initial_glyph>
+    </initial>
+    <state name="waitForMessage">
+     <entry>MQTT_CLIENT_LOG_DEBUG(&quot;Wait for message&quot;);</entry>
+     <tran trig="MQTT_MESSAGE_RECIVED">
+      <action>MQTT_CLIENT_LOG_DEBUG(&quot;Recived new message{%s}&quot;, Q_EVT_CAST(MQTTMessageRecived)-&gt;m_message.c_str());
+g_document.Parse(Q_EVT_CAST(MQTTMessageRecived)-&gt;m_message.c_str());
+MQTT_CLIENT_LOG_DEBUG(&quot;Successfuly parsed&quot;);</action>
+      <choice target="../../../3">
+       <guard>Q_EVT_CAST(MQTTMessageRecived)-&gt;m_topic == g_FROM_HW_TOPIC</guard>
+       <choice_glyph conn="54,28,4,3,-14,30">
+        <action box="1,-14,32,3"/>
+       </choice_glyph>
+      </choice>
+      <choice target="../../../2">
+       <guard>Q_EVT_CAST(MQTTMessageRecived)-&gt;m_topic == g_FROM_APP_TOPIC</guard>
+       <choice_glyph conn="54,28,4,3,35,30">
+        <action box="1,32,30,2"/>
+       </choice_glyph>
+      </choice>
+      <tran_glyph conn="5,28,3,-1,49">
+       <action box="0,-12,43,12"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="5,12,43,20">
+      <entry box="1,2,6,2"/>
+     </state_glyph>
+    </state>
+    <state name="appEvtHandler">
+     <state_glyph node="84,59,28,20"/>
+    </state>
+    <state name="hwEvtHandler">
+     <entry brief="Handle Commands">if(g_document[&quot;command&quot;].IsString()){
+    std::string command = g_document[&quot;command&quot;].GetString();
+    MQTT_CLIENT_LOG_DEBUG(&quot;Recived{command:%s}&quot;,command.c_str());
+    if(command == &quot;UPDATE_SENSOR_VALUE&quot;){
+        auto newEvt = Q_NEW(HWSensorValueUpdate, HW_UPDATE_SENSOR_SIG);
+        assert(g_document[&quot;id&quot;].IsUint());
+        newEvt-&gt;m_id = g_document[&quot;id&quot;].GetUint();
+        assert(g_document[&quot;value&quot;].IsInt());
+        newEvt-&gt;m_value = g_document[&quot;value&quot;].GetInt();
+        QP::QF::PUBLISH(newEvt, nullptr);
+    } else if(command == &quot;ADD_SENSOR&quot;){
+        auto newEvt = Q_NEW(HWAddSensor, HW_ADD_SENSOR_SIG);
+        assert(g_document[&quot;type&quot;].IsNumber());
+        newEvt-&gt;m_type = (sensor_t)g_document[&quot;type&quot;].GetUint();
+        assert(g_document[&quot;title&quot;].IsString());
+        newEvt-&gt;m_title = g_document[&quot;title&quot;].GetString();
+        QP::QF::PUBLISH(newEvt, nullptr);
+    } else if(command == &quot;REMOVE_SENSOR&quot;){
+        auto newEvt = Q_NEW(HWRemoveSensor, HW_REMOVE_SENSOR_SIG);
+        assert(g_document[&quot;id&quot;].IsUint());
+        newEvt-&gt;m_id = g_document[&quot;id&quot;].GetUint();
+        QP::QF::PUBLISH(newEvt, nullptr);
+    } else if(command == &quot;GET_SENSORS&quot;){
+        QP::QF::PUBLISH(Q_NEW(QP::QEvt, GET_SENSORS_SIG), nullptr);
+    } else {
+        MQTT_CLIENT_LOG_DEBUG(&quot;Command doesn't match{command:%s}&quot;,g_document[&quot;command&quot;].GetString());
+    }
+} else {
+    MQTT_CLIENT_LOG_DEBUG(&quot;Invalid HW message&quot;);
+}
+this-&gt;POST(Q_NEW(QP::QEvt, HANDLING_FINISHED_SIG), this);</entry>
+     <tran trig="HANDLING_FINISHED" target="../../1">
+      <tran_glyph conn="112,46,1,2,-104,-14">
+       <action box="-17,-2,17,2"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="84,10,28,40">
+      <entry box="1,2,25,3"/>
+     </state_glyph>
+    </state>
+    <state_diagram size="114,85"/>
+   </statechart>
+  </class>
+ </package>
+ <directory name="../">
+  <directory name="include">
+   <directory name="qp">
+    <file name="mqtt_client_sm.hpp">
+     <text>#pragma once
+#include &quot;qpcpp.hpp&quot;
+
+extern const char* g_FROM_HW_TOPIC;
+extern const char* g_FROM_APP_TOPIC;
+
+$declare(MQTT::CMQTTLoop)
+
+$declare(MQTT::CMQTTEvtHandler)</text>
+    </file>
+   </directory>
+  </directory>
+  <directory name="sources">
+   <directory name="qp">
+    <file name="mqtt_client_sm.cpp">
+     <text>#include &lt;cstdlib&gt;
+#include &lt;string&gt;
+#include &lt;iostream&gt;
+#include &quot;qp/mqtt_client_sm.hpp&quot;
+#include &quot;qp/backend_events.hpp&quot;
+#include &quot;mqtt/mqtt_client_api.hpp&quot;
+#include &quot;logger/logger_api.hpp&quot;
+#include &quot;rapidjson/document.h&quot;
+
+#define MQTT_CLIENT_PREF &quot;QP MQTT Client:&quot;
+#define MQTT_CLIENT_LOG_ERROR(fmt, ...) CLogger::getLogger()-&gt;msgToLog(log_err, MQTT_CLIENT_PREF fmt, ##__VA_ARGS__)
+#define MQTT_CLIENT_LOG_DEBUG(fmt, ...) CLogger::getLogger()-&gt;msgToLog(log_dbg, MQTT_CLIENT_PREF fmt, ##__VA_ARGS__)
+#define MQTT_CLIENT_LOG_INFO(fmt, ...) CLogger::getLogger()-&gt;msgToLog(log_info, MQTT_CLIENT_PREF fmt, ##__VA_ARGS__)
+#define MQTT_CLIENT_LOG_TRACE(fmt, ...) CLogger::getLogger()-&gt;msgToLog(log_trace, MQTT_CLIENT_PREF fmt, ##__VA_ARGS__)
+
+using namespace rapidjson;
+
+extern void mqttClietLoop();
+
+Document g_document;
+
+$define(MQTT::CMQTTLoop)
+
+$define(MQTT::CMQTTEvtHandler)</text>
+    </file>
+   </directory>
+  </directory>
+ </directory>
+</model>

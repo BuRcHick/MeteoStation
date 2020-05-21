@@ -1,7 +1,2 @@
 *.vscode*
 *build*
-*Drivers*
-*.mxproject*
-*startup_*
-*.ld*
-*STM32Make.make
