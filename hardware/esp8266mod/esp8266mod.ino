@@ -50,6 +50,7 @@ CSensor g_sensors[SENSORS_COUNT];  // Vector of sensors
 const char* g_mqttSubscribeTopics[] = {"GET_SENSORS"};
 const char* g_mqttPublishTopics[] = {"SESNORS_LIST", "SENSOR_UPDATE"};
 
+static bool s_init = false;
 class myMQTTBroker: public uMQTTBroker
 {
 public:
@@ -65,6 +66,8 @@ public:
     
     virtual void onData(String topic, const char *data, uint32_t length) {
         if (!strcmp(topic.c_str(), "GET_SENSORS")) {
+            s_init = false;
+            Serial.println("getSensors");
             DynamicJsonDocument doc(1024);
             for (size_t i = 0; i < sizeof(g_sensors) / sizeof(g_sensors[0]); ++i) {
                 JsonObject obj = doc.createNestedObject();
@@ -78,6 +81,8 @@ public:
                 publish("SESNORS_LIST", output.c_str(), output.length());
                 doc.clear();
             }
+            publish("LAST_SENSOR", nullptr, 0);
+            s_init = true;
         }
     }
 };
@@ -88,15 +93,17 @@ static Thread s_mqttLoopThr = Thread();
 static Thread s_sensorsMonitorThr = Thread();
 
 static void s_sensorMonitor() {
-    Serial.println("s_sensorMonitor");
-    for (size_t i = 0; i < sizeof(g_sensors) / sizeof(g_sensors[0]); ++i) {
-        DynamicJsonDocument doc(2048);
-        JsonObject obj = doc.createNestedObject();
-        obj[String("m_id")] = String(g_sensors[i].getId());
-        obj[String("m_value")] = String(g_sensors[i].getValue());
-        String output;
-        serializeJson(doc, output);
-        g_MQTTBroker.publish("SENSOR_UPDATE", output.c_str(), output.length());
+    if(s_init) {
+        Serial.println("s_sensorMonitor");
+        for (size_t i = 0; i < sizeof(g_sensors) / sizeof(g_sensors[0]); ++i) {
+            DynamicJsonDocument doc(2048);
+            JsonObject obj = doc.createNestedObject();
+            obj[String("m_id")] = String(g_sensors[i].getId());
+            obj[String("m_value")] = String(g_sensors[i].getValue());
+            String output;
+            serializeJson(doc, output);
+            g_MQTTBroker.publish("SENSOR_UPDATE", output.c_str(), output.length());
+        }
     }
 }
 
@@ -209,16 +216,12 @@ void setup() {
     s_wifiSetup(STASSID, STAPSK);
     s_sensorsConfiguration();
     g_MQTTBroker.init();
-    s_sensorsMonitorThr.onRun(s_sensorMonitor);
-    s_sensorsMonitorThr.setInterval(1000);
     for (size_t i = 0; i < sizeof(g_mqttSubscribeTopics)/sizeof(g_mqttSubscribeTopics[0]); ++i) {
         g_MQTTBroker.subscribe(g_mqttSubscribeTopics[i]);
     }
 }
 
 void loop() {
-    if(s_sensorsMonitorThr.shouldRun()) {
-       s_sensorsMonitorThr.run();
-    }
+    s_sensorMonitor();
     delay(1000);
 }
