@@ -7,6 +7,7 @@ import android.text.format.Formatter
 import android.util.JsonReader
 import android.util.Log
 import android.view.Menu
+import android.widget.TextView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.navigation.NavigationView
@@ -19,6 +20,8 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.appcompat.app.AppCompatActivity
 
 import androidx.appcompat.widget.Toolbar
+import androidx.core.view.marginTop
+import kotlinx.android.synthetic.main.fragment_home.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -51,11 +54,6 @@ class MainActivity : AppCompatActivity(), MqttListner {
         val toolbar: Toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
 
-        val fab: FloatingActionButton = findViewById(R.id.fab)
-        fab.setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                    .setAction("Action", null).show()
-        }
         val drawerLayout: DrawerLayout = findViewById(R.id.drawer_layout)
         val navView: NavigationView = findViewById(R.id.nav_view)
         val navController = findNavController(R.id.nav_host_fragment)
@@ -131,7 +129,6 @@ class MainActivity : AppCompatActivity(), MqttListner {
 
     override fun onMessageRecived(topic: String, message: String) {
         if(isConnect) {
-            //Log.d("=========$topic===========", message)
             when (topic) {
                 "SESNORS_LIST" -> {
                     if(isInit) {
@@ -149,11 +146,53 @@ class MainActivity : AppCompatActivity(), MqttListner {
                 }
                 "LAST_SENSOR" -> {
                     isInit = true
-                    Log.d("SENSOR_MANAGER", "==================${uiSensors.size}")
 
                 }
-                "UPDATE_SENSOR" -> {
+                "SENSOR_UPDATE" -> {
                     if(isInit) {
+                        var array = JSONArray(message)
+                        var jsonSensor = JSONObject(array.get(0).toString())
+                        sensorManager.updateSensor(jsonSensor.getInt("m_id"), jsonSensor.getInt("m_value"))
+                        var tempView = findViewById<TextView>(R.id.temperature)
+                        var humView = findViewById<TextView>(R.id.humidity)
+                        var prView = findViewById<TextView>(R.id.pressure)
+                        var summ = 0
+                        var count = 0
+                        for (index in 0..sensorManager.size()) {
+                            val sensor = sensorManager.getSensor(index)
+                            if(sensor != null && sensor.m_type == "TEMPERATURE") {
+                                summ += sensor.m_value
+                                count++
+                            }
+                        }
+                        if(count > 0) {
+                            tempView.text = ((summ/count).toDouble()/100).toString()
+                        }
+                        count = 0
+                        summ = 0
+                        for (index in 0..sensorManager.size()) {
+                            val sensor = sensorManager.getSensor(index)
+                            if(sensor != null && sensor.m_type == "HUMIDITY") {
+                                summ += sensor.m_value
+                                count++
+                            }
+                        }
+                        if(count > 0) {
+                            humView.text = ((summ/count).toDouble()/100).toString()
+                        }
+
+                        count = 0
+                        summ = 0
+                        for (index in 0..sensorManager.size()) {
+                            val sensor = sensorManager.getSensor(index)
+                            if(sensor != null && sensor.m_type == "PRESSURE") {
+                                summ += sensor.m_value
+                                count++
+                            }
+                        }
+                        if(count > 0) {
+                            prView.text = ((summ/count).toDouble()/100).toString()
+                        }
                     }
                 }
             }
@@ -166,3 +205,20 @@ class MainActivity : AppCompatActivity(), MqttListner {
         mqttClient.publish("GET_SENSORS", "")
     }
 }
+/*
+    <TextView
+        android:id="@+id/text_home"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:textAlignment="center"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.494" />
+* */
