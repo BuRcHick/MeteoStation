@@ -1,0 +1,5 @@
+backend/*
+!backend/backend.ioc
+!backend/Src/
+backend/Src/*
+!backend/Src/main.c
