@@ -1,2 +1,6 @@
-*.vscode*
 *build*
+hardware/bsp/cubemx_gen/*
+!hardware/bsp/cubemx_gen/*.ioc
+!hardware/bsp/cubemx_gen/Src/
+hardware/bsp/cubemx_gen/Src/*
+!hardware/bsp/cubemx_gen/Src/main.c

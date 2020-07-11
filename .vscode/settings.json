@@ -1,0 +1,12 @@
+{
+    "C_Cpp.default.cppStandard": "c++20",
+    "C_Cpp.default.includePath": [
+        "${default}",
+        "${workspaceFolder}/hardware/bsp/app/inc",
+        "${workspaceFolder}/hardware/bsp/cubemx_gen/Inc",
+        "${workspaceFolder}/hardware/bsp/cubemx_gen/Drivers/CMSIS/Include",
+        "${workspaceFolder}/hardware/bsp/cubemx_gen/Drivers/STM32F1xx_HAL_Driver/Inc",
+        "${workspaceFolder}/hardware/bsp/cubemx_gen/Middlewares/Third_Party/FreeRTOS/Source/include",
+        "${workspaceFolder}/hardware/bsp/cubemx_gen/Drivers/CMSIS/Device/ST/STM32F1xx/Include",
+        "${workspaceFolder}/hardware/bsp/cubemx_gen/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM3",]
+}
