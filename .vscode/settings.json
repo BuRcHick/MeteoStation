@@ -8,5 +8,8 @@
         "${workspaceFolder}/hardware/bsp/cubemx_gen/Drivers/STM32F1xx_HAL_Driver/Inc",
         "${workspaceFolder}/hardware/bsp/cubemx_gen/Middlewares/Third_Party/FreeRTOS/Source/include",
         "${workspaceFolder}/hardware/bsp/cubemx_gen/Drivers/CMSIS/Device/ST/STM32F1xx/Include",
-        "${workspaceFolder}/hardware/bsp/cubemx_gen/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM3",]
+        "${workspaceFolder}/hardware/bsp/cubemx_gen/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM3",
+        "${workspaceFolder}/hardware/bsp/cubemx_gen/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS",
+        "${workspaceFolder}/hardware/bsp/drivers/inc",]
+    ]
 }
